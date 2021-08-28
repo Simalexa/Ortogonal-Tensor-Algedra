@@ -4,19 +4,20 @@
 Tenzor::Tenzor() : rows(0), columns(0), rank(0)
 {
 }
-void Tenzor::createTenzor(std::string s = "")
+void Tenzor::createTenzor(QString s = "")
 {
-	clearTenzor();
+    clearTenzor();
 	if (s != "")
 	{
-		std::string elements = " ()*";
+        QString elements = " ()*";
 		for (int i = 0; i < elements.size(); i++)
-			s.erase(remove(s.begin(), s.end(), elements[i]), s.end());
-		checkFormat(s);
+            s.remove(elements[i]);
+        checkFormat(s);
 		if (s[0] != '-' && s[0] != '+') s = " " + s;
-		findDigit(s);
-		findIndex(s);
-		findRowsAndColumns();
+        findDigit(s);
+        //findIndex(s);
+        findRowsAndColumns();
+        simplify();
 	}
 }
 void Tenzor::clearTenzor()
@@ -65,86 +66,127 @@ int Tenzor::findNumberOf(int a)
 	}
 	return 1;
 }
-void Tenzor::checkFormat(std::string s)
+void Tenzor::checkFormat(QString s)
 {
-	char const* index = "ijk+-.0123456789";
-	if(s.find_first_not_of(index) >= 0 && s.find_first_not_of(index) < s.size())
-		throw "Calculation support only ortogonal vectors";
+    QString const index = "ijk+-.0123456789";
+    for(int i=0;i< s.size();i++)
+        if(index.indexOf(s[i]) == -1)
+           throw "Calculation support only ortogonal vectors";
 }
-int Tenzor::findDigit(std::string s)
+/*int Tenzor::findDigit(QString s)
 {
 	char const* digit = "01234567890.";
-	int n = s.find_first_of(digit), m = s.find_first_not_of(digit, n);
+    int n = s.toStdString().find_first_of(digit), m = s.toStdString().find_first_not_of(digit, n);
 	if (n == -1) return 0;
 	if (m == -1) m = s.size();
 	while (n != -1)
 	{
-		std::string newElement = "";
+        QString newElement = "";
 		for (int i = n; i < m; i++) newElement += s[i];
 		if (s[n - 1] == '-')
-			tenzorValue.push_back(-1 * atof(newElement.c_str()));
+            tenzorValue.push_back(-1 * newElement.toInt());
 		else
-			tenzorValue.push_back(atof(newElement.c_str()));
-		s.erase(s.begin() + n - 1, s.begin() + m);
-		n = s.find_first_of(digit);
-		m = s.find_first_not_of(digit, n);
+            tenzorValue.push_back(newElement.toInt());
+        s.remove(n - 1, m);
+        n = s.toStdString().find_first_of(digit);
+        m = s.toStdString().find_first_not_of(digit, n);
 	}
 	return 0;
+}*/
+int Tenzor::findDigit(QString s)
+{
+    char const* digit = "ijk";
+    int n = s.toStdString().find_first_of(digit), m = s.toStdString().find_first_not_of(digit);
+    if (n == -1) return 0;
+    while (n != -1)
+    {
+        QString newElement = "";
+        for (int i = m; i < n; i++) newElement += s[i];
+        tenzorValue.push_back(newElement.toDouble());
+        s.remove(m, n);
+        int l = s.toStdString().find_first_not_of(digit);
+        if(l == -1) l = s.size();
+        newElement = "";
+        for (int i = 0; i < l; i++) newElement += s[i];
+        tenzorIndex.push_back(newElement);
+        s.remove(0, l);
+        n = s.toStdString().find_first_of(digit);
+        m = s.toStdString().find_first_not_of(digit);
+    }
+    return 0;
 }
-int Tenzor::findIndex(std::string s)
+/*int Tenzor::findIndex(QString s)
 {
 	char const* index = "ijk";
-	int n = s.find_first_of(index), m = s.find_first_not_of(index, n);
+    int n = s.toStdString().find_first_of(index), m = s.toStdString().find_first_not_of(index, n);
 	if (n == -1) return 0;
 	if (m == -1) m = s.size();
 	while (n != -1)
 	{
-		std::string newElement = "";
+        QString newElement = "";
 		for (int i = n; i < m; i++) newElement += s[i];
 		tenzorIndex.push_back(newElement);
-		s.erase(s.begin() + n - 1, s.begin() + m);
-		n = s.find_first_of(index);
-		m = s.find_first_not_of(index, n);
+        s.remove(n - 1, m);
+        n = s.toStdString().find_first_of(index);
+        m = s.toStdString().find_first_not_of(index, n);
 		if (m == -1) m = s.size();
 	}
 	for(int i=0;i<tenzorIndex.size();i++)
 		if (tenzorIndex[i].size() != tenzorIndex[0].size())
 			throw "Not correct tenzor index formats";
 	return 0;
-}
-int Tenzor::printTenzorForm()
+}*/
+QString Tenzor::printTenzorForm()
 {
-	if (rank == 0)
+    QString s;
+    if (rank == 0)
 	{
-		std::cout << tenzorValue[0];
-		return 0;
+        s = QString::number(tenzorValue[0]);
+        return s;
 	}
-	std::cout << tenzorValue[0] << tenzorIndex[0];
+    s = QString::number(tenzorValue[0]) + tenzorIndex[0];
 	for (int i = 1; i < tenzorIndex.size(); i++)
 	{
 		if (tenzorValue[i] > 0)
-			std::cout << " +" << tenzorValue[i] << tenzorIndex[i];
+            s += " +" + QString::number(tenzorValue[i]) + tenzorIndex[i];
 		else if (tenzorValue[i] < 0)
-			std::cout << " " << tenzorValue[i] << tenzorIndex[i];
+            s += " " + QString::number(tenzorValue[i]) + tenzorIndex[i];
 	}
-	std::cout << std::endl;
-	return 0;
+    return s;
 }
-int Tenzor::printMatrixForm()
+QString* Tenzor::printMatrixForm()
 {
-	if (rank == 3)
+    QString *s;
+    s = new QString[3];
+    QString halfResult = "";
+    if (rank == 3)
 		throw "It is impossible to build a 3 dimension matrix";
+    if(rank == 1)
+    {
+        for (int i = 0; i < rows; i++)
+            s[i] = QString::number(findElementWithIndexVector(i));
+        return s;
+    }
 	for (int i = 0; i < rows; i++)
 	{
 		for (int j = 0; j < columns; j++)
-			std::cout << findElementWithIndex(i, j) << " ";
-		std::cout << std::endl;
+            halfResult+= QString::number(findElementWithIndex(i, j)) + " ";
+        s[i] = halfResult;
+        halfResult = "";
 	}
-	return 0;
+    return s;
+}
+double Tenzor::findElementWithIndexVector(int a)
+{
+    QString index = ijk[a];
+    for (int i = 0; i < tenzorIndex.size(); i++)
+        if (tenzorIndex[i] == index)
+            return tenzorValue[i];
+    return 0;
 }
 double Tenzor::findElementWithIndex(int a, int b)
 {
-	std::string index = std::string() + ijk[a] + ijk[b];
+    QString index = ijk[a] + ijk[b];
 	for (int i = 0; i < tenzorIndex.size(); i++)
 		if (tenzorIndex[i] == index)
 			return tenzorValue[i];
@@ -152,24 +194,26 @@ double Tenzor::findElementWithIndex(int a, int b)
 }
 void Tenzor::simplify()
 {
-	for (int i = 0; i < tenzorIndex.size(); i++)
-	{
-		for (int j = 0; j < tenzorIndex.size(); j++)
-		{
-			if (i != j && tenzorIndex[i] == tenzorIndex[j])
-			{
-				tenzorValue[i] = tenzorValue[i] + tenzorValue[j];
-				if (tenzorValue[i] == 0)
-				{
-					tenzorIndex.erase(tenzorIndex.begin() + i);
-					tenzorValue.erase(tenzorValue.begin() + i);
-				}
-				tenzorIndex.erase(tenzorIndex.begin() + j);
-				tenzorValue.erase(tenzorValue.begin() + j);
-			}
-		}
-	}
+    for (int i = 0; i < tenzorIndex.size(); i++)
+        for (int j = 0; j < tenzorIndex.size(); j++)
+            if (i != j && tenzorIndex[i] == tenzorIndex[j] && tenzorValue[i]!=0)
+            {
+                tenzorValue[i] = tenzorValue[i] + tenzorValue[j];
+                if (tenzorValue[i] == 0)
+                {
+                    tenzorIndex.remove(i);
+                    tenzorValue.remove(i);
+                }
+                tenzorValue[j]=0;
+            }
+    for(int i=tenzorIndex.size() - 1; i>0;i--)
+        if(tenzorValue[i]==0)
+        {
+            tenzorIndex.remove(i);
+            tenzorValue.remove(i);
+        }
 }
+
 Tenzor Tenzor::operator+(Tenzor obj)
 {
 	Tenzor res;
@@ -185,21 +229,23 @@ Tenzor Tenzor::operator+(Tenzor obj)
 		res.tenzorIndex.push_back(obj.tenzorIndex[j]);
 		res.tenzorValue.push_back(obj.tenzorValue[j]);
 	}
-	res.findRowsAndColumns();
-	res.simplify();
+    res.findRowsAndColumns();
+    res.simplify();
 	return res;
 }
 Tenzor Tenzor::operator*(Tenzor obj)
 {
 	Tenzor res;
-	if (rank != obj.rank)
-		throw "Unable to do operation for object with different rank";
+    /*if (rank != obj.rank)
+        throw "Unable to do operation for object with different rank";*/
 	for (int i = 0;i < tenzorIndex.size();i++)
 		for (int j = 0; j < obj.tenzorIndex.size(); j++)
 		{
 			if (tenzorIndex[i][rank - 1] == obj.tenzorIndex[j][0])
 			{
-				res.tenzorIndex.push_back(std::string() + tenzorIndex[i].substr(0, rank - 1) + obj.tenzorIndex[j].substr(1,obj.rank));
+                QString newString = tenzorIndex[i].mid(0,rank - 1) + obj.tenzorIndex[j].mid(1,obj.rank - 1);
+                //QString newString = "" + tenzorIndex[i].toStdString().substr(0, rank - 1) + obj.tenzorIndex[j].toStdString().substr(1,obj.rank);
+                res.tenzorIndex.push_back(newString);
 				res.tenzorValue.push_back(tenzorValue[i] * obj.tenzorValue[j]);
 			}
 		}

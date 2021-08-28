@@ -1,32 +1,37 @@
 #ifndef EQUATION_H
 #define EQUATION_H
 #include "Tenzor.h"
-#include "rule.h"
+#include "Rule.h"
 #include <string>
 #include <map>
 #include <algorithm>
 #include <iterator>
 
-class equation : rule
+
+class equation : public rule
 {
 public:
-	equation(std::string s);
-	void analyzeEquation(std::string equation_name);
-	void createTenzorMap(std::string name, struct Tenzor *T);
-	void solveEquation();
+    equation();
+    QString printResult();
+    QString* printResultMatrixForm();
+    void createEquation(QString s);
+    void analyzeEquation(QString equation_name);
+    void createTenzorMap(QString name, struct Tenzor *T);
+    int solveEquation();
+    void clearEquation();
 private:
-	int findOperation(int number);
-	int findLastOf(std::string s, std::vector<std::string> name);
-	int findFirstOf(std::string s, std::vector<std::string> name);
-	int solvePriority(int number);
-	Tenzor *operation(std::string operand1, std::string op_name, std::string operand2);
-	int deleteBrackets();
+    int findOperation(int number);
+    int findLastOf(QString s, QVector<QString> name);
+    int findFirstOf(QString s, QVector<QString> name);
+    int solvePriority(int number);
+    Tenzor *operation(QString operand1, QString op_name, QString operand2);
+    int deleteBrackets();
 protected:
-	const std::vector<std::string> possible_operations = { "(" , ")", "+" , "-" , "*x" , "x*" , "**" , "nabla" , "xx", "*" , "x" };
-	const std::vector<int> standart_priority = {0,0,0,0,1,1,1,1,1,1,1};
-	std::vector<int> priority;
-	std::vector<std::string> tenzor_name;
-	std::vector<std::string> op_name;
-	std::map<std::string, Tenzor*> tenzorMap;
+    const QVector<QString> possible_operations = { "(" , ")", "+" , "-" , "*x" , "x*" , "**" , "nabla" , "xx", "*" , "x" };
+    const QVector<int> standart_priority = {0,0,0,0,1,1,1,1,1,1,1};
+    QVector<int> priority;
+    QVector<QString> tenzor_name;
+    QVector<QString> op_name;
+    QMap<QString, struct Tenzor*> tenzorMap;
 };
 #endif
